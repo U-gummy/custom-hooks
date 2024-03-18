@@ -1,6 +1,6 @@
 {
   "name": "@u-gummy/use-toast",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "react custom hooks",
   "main": "index.js",
   "scripts": {
@@ -13,6 +13,10 @@
   "author": "u-gummy",
   "license": "MIT",
   "peerDependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "dependencies": {
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   }
