@@ -1,35 +1,99 @@
-import { useCallback, useState } from "react";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 
-export interface Toast {
+interface Toast {
   id?: string;
   title?: string;
   message: string;
-  type: "error" | "success";
+  type: "error" | "success" | "info";
 }
 
-export const useToast = () => {
+const ToastContext = createContext<any | null>(null);
+
+export const ToastContextProvider = ({ children }) => {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
-  const hideToast = useCallback(
-    (toastId: string) => {
-      setToasts((currentToast) =>
-        currentToast.filter((toast) => toast.id !== toastId)
+  useEffect(() => {
+    if (toasts.length > 0) {
+      const timer = setTimeout(
+        () => setToasts((toasts) => toasts.slice(1)),
+        3000
       );
-    },
-    [setToasts]
-  );
+      return () => clearTimeout(timer);
+    }
+  }, [toasts]);
 
   const showToast = useCallback(
-    (toast: Toast) => {
-      const id = toast.message;
-      setToasts((currentToast) => {
-        const isExist = currentToast.find((item) => item.message === id);
-        return isExist ? currentToast : [...currentToast, { ...toast, id }];
-      });
-      setTimeout(() => hideToast(id), 3000);
+    ({ type, message, title }) => {
+      const addId = type + message;
+      const isToast = !!toasts.filter((t) => t.id === addId).length;
+
+      if (!isToast) {
+        setToasts((toasts) => [...toasts, { type, message, title, id: addId }]);
+      }
     },
-    [hideToast, setToasts]
+    [toasts]
   );
 
-  return { toasts, showToast, hideToast };
+  const handleRemove = (id: string) => {
+    const newToasts = toasts.filter((toast) => toast.id !== id);
+    setToasts(newToasts);
+  };
+
+  return (
+    <ToastContext.Provider value={showToast}>
+      {children}
+      {toasts.length ? (
+        <div
+          className="ugly-toast-wrapper"
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 3,
+            position: "fixed",
+            left: "50%",
+            bottom: "50px",
+            transform: "translateX(-50%)",
+          }}
+        >
+          {toasts.map(({ id, title, message, type }) => (
+            <div
+              className={`ugly-toast-item ${type}`}
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                background: "#dc5151",
+                padding: "10px 20px",
+                minWidth: "300px",
+                borderRadius: 5,
+                color: "#fff",
+              }}
+              key={id}
+            >
+              <div className="ugly-toast-text-box">
+                {title && <p className="ugly-toast-title">{title}</p>}
+                <p className="ugly-toast-message">{message}</p>
+              </div>
+              <button
+                className="ugly-toast-close-button"
+                onClick={() => handleRemove(id!)}
+              >
+                닫기
+              </button>
+            </div>
+          ))}
+        </div>
+      ) : null}
+    </ToastContext.Provider>
+  );
 };
+
+export function useToast() {
+  return useContext(ToastContext);
+}
